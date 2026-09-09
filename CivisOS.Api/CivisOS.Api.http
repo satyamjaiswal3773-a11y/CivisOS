@@ -1,0 +1,26 @@
+@CivisOS.Api_http = http://localhost:5142
+
+### Login
+POST {{CivisOS.Api_http}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@civisos.local",
+  "password": "Admin@12345"
+}
+
+### Me
+GET {{CivisOS.Api_http}}/api/v1/auth/me
+Authorization: Bearer {{token}}
+
+### Vehicle types
+GET {{CivisOS.Api_http}}/api/v1/vehicles/types
+Authorization: Bearer {{token}}
+
+### Vehicle summary
+GET {{CivisOS.Api_http}}/api/v1/vehicles/summary
+Authorization: Bearer {{token}}
+
+### List vehicles
+GET {{CivisOS.Api_http}}/api/v1/vehicles?pageNumber=1&pageSize=10
+Authorization: Bearer {{token}}

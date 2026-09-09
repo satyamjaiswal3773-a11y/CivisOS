@@ -16,26 +16,32 @@ namespace CivisOS.Api.Controllers;
 public class VehiclesController : ControllerBase
 {
     private readonly IVehicleService _vehicleService;
+    private readonly IVehicleGpsService _vehicleGpsService;
     private readonly IValidator<CreateVehicleRequest> _createValidator;
     private readonly IValidator<UpdateVehicleRequest> _updateValidator;
     private readonly IValidator<CreateVehicleDocumentRequest> _documentValidator;
     private readonly IValidator<CreateVehicleTypeRequest> _typeValidator;
     private readonly IValidator<AssignVehicleDriverRequest> _driverValidator;
+    private readonly IValidator<UpdateVehicleLocationRequest> _locationValidator;
 
     public VehiclesController(
         IVehicleService vehicleService,
+        IVehicleGpsService vehicleGpsService,
         IValidator<CreateVehicleRequest> createValidator,
         IValidator<UpdateVehicleRequest> updateValidator,
         IValidator<CreateVehicleDocumentRequest> documentValidator,
         IValidator<CreateVehicleTypeRequest> typeValidator,
-        IValidator<AssignVehicleDriverRequest> driverValidator)
+        IValidator<AssignVehicleDriverRequest> driverValidator,
+        IValidator<UpdateVehicleLocationRequest> locationValidator)
     {
         _vehicleService = vehicleService;
+        _vehicleGpsService = vehicleGpsService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
         _documentValidator = documentValidator;
         _typeValidator = typeValidator;
         _driverValidator = driverValidator;
+        _locationValidator = locationValidator;
     }
 
     [HttpGet]
@@ -58,6 +64,14 @@ public class VehiclesController : ControllerBase
     public async Task<ActionResult<ApiResponse<VehicleSummaryDto>>> GetSummary(CancellationToken cancellationToken)
     {
         var result = await _vehicleService.GetSummaryAsync(cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("live")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<VehicleLocationDto>>>> GetLiveLocations(
+        CancellationToken cancellationToken)
+    {
+        var result = await _vehicleGpsService.GetLiveLocationsAsync(cancellationToken);
         return Ok(result);
     }
 
@@ -176,5 +190,52 @@ public class VehiclesController : ControllerBase
 
         var result = await _vehicleService.AssignDriverAsync(id, request, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPost("{id:guid}/location")]
+    [Authorize(Roles = $"{AppRoles.SuperAdmin},{AppRoles.SocietyAdmin},{AppRoles.Supervisor},{AppRoles.Driver}")]
+    public async Task<ActionResult<ApiResponse<VehicleLocationDto>>> UpdateLocation(
+        Guid id,
+        [FromBody] UpdateVehicleLocationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var validation = await _locationValidator.ValidateAsync(request, cancellationToken);
+        if (!validation.IsValid)
+        {
+            return BadRequest(ApiResponse<VehicleLocationDto>.Fail(
+                "Validation failed.",
+                validation.Errors.Select(e => e.ErrorMessage)));
+        }
+
+        var result = await _vehicleGpsService.UpdateLocationAsync(id, request, cancellationToken);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    [HttpGet("{id:guid}/location")]
+    public async Task<ActionResult<ApiResponse<VehicleLocationDto>>> GetLocation(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _vehicleGpsService.GetLocationAsync(id, cancellationToken);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    [HttpGet("{id:guid}/location/history")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<VehicleLocationHistoryDto>>>> GetLocationHistory(
+        Guid id,
+        [FromQuery] int hours = 24,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _vehicleGpsService.GetLocationHistoryAsync(id, hours, cancellationToken);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    [HttpGet("{id:guid}/geofence-events")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<VehicleGeoFenceEventDto>>>> GetGeoFenceEvents(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _vehicleGpsService.GetGeoFenceEventsAsync(id, cancellationToken);
+        return result.Success ? Ok(result) : NotFound(result);
     }
 }

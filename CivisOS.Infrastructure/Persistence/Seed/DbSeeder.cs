@@ -1,5 +1,6 @@
 using CivisOS.Domain.Constants;
 using CivisOS.Domain.Entities;
+using CivisOS.Domain.Enums;
 using CivisOS.Infrastructure.Identity;
 using CivisOS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -91,6 +92,87 @@ public static class DbSeeder
                     new Designation { Name = "Driver", Description = "Vehicle driver" },
                     new Designation { Name = "Security Guard", Description = "Security personnel" },
                     new Designation { Name = "Cleaner", Description = "Cleaning staff" }
+                );
+                await db.SaveChangesAsync();
+            }
+
+            // Sample society coordinates (approx. Hyderabad area) for Swagger/check demos.
+            if (!await db.GeoFences.AnyAsync())
+            {
+                db.GeoFences.AddRange(
+                    new GeoFence
+                    {
+                        Name = "Main Gate",
+                        Description = "Society main entrance gate",
+                        CenterLatitude = 17.4485,
+                        CenterLongitude = 78.3908,
+                        RadiusMeters = 40,
+                        Status = GeoFenceStatus.Active
+                    },
+                    new GeoFence
+                    {
+                        Name = "Parking",
+                        Description = "Visitor and resident parking",
+                        CenterLatitude = 17.4490,
+                        CenterLongitude = 78.3915,
+                        RadiusMeters = 80,
+                        Status = GeoFenceStatus.Active
+                    },
+                    new GeoFence
+                    {
+                        Name = "Office",
+                        Description = "Society office / attendance zone",
+                        CenterLatitude = 17.4488,
+                        CenterLongitude = 78.3910,
+                        RadiusMeters = 50,
+                        Status = GeoFenceStatus.Active
+                    },
+                    new GeoFence
+                    {
+                        Name = "Cleaning Zone A",
+                        Description = "Block A common areas",
+                        CenterLatitude = 17.4495,
+                        CenterLongitude = 78.3905,
+                        RadiusMeters = 60,
+                        Status = GeoFenceStatus.Active
+                    },
+                    new GeoFence
+                    {
+                        Name = "Cleaning Zone B",
+                        Description = "Block B common areas",
+                        CenterLatitude = 17.4478,
+                        CenterLongitude = 78.3920,
+                        RadiusMeters = 60,
+                        Status = GeoFenceStatus.Active
+                    }
+                );
+                await db.SaveChangesAsync();
+            }
+
+            if (!await db.CleaningAreas.AnyAsync())
+            {
+                var zoneA = await db.GeoFences.FirstOrDefaultAsync(f => f.Name == "Cleaning Zone A");
+                var zoneB = await db.GeoFences.FirstOrDefaultAsync(f => f.Name == "Cleaning Zone B");
+
+                db.CleaningAreas.AddRange(
+                    new CleaningArea
+                    {
+                        Name = "Block A Commons",
+                        Description = "Lobbies and corridors in Block A",
+                        GeoFenceId = zoneA?.Id,
+                        Frequency = CleaningFrequency.Daily,
+                        NextCleanDueAtUtc = DateTime.UtcNow.AddDays(1),
+                        Status = CleaningAreaStatus.Active
+                    },
+                    new CleaningArea
+                    {
+                        Name = "Block B Commons",
+                        Description = "Lobbies and corridors in Block B",
+                        GeoFenceId = zoneB?.Id,
+                        Frequency = CleaningFrequency.Daily,
+                        NextCleanDueAtUtc = DateTime.UtcNow.AddDays(1),
+                        Status = CleaningAreaStatus.Active
+                    }
                 );
                 await db.SaveChangesAsync();
             }

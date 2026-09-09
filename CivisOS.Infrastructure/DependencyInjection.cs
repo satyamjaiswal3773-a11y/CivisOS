@@ -1,6 +1,14 @@
 using System.Text;
+using CivisOS.Application.Ai.Interfaces;
+using CivisOS.Application.Attendances.Interfaces;
+using CivisOS.Application.Cleanings.Interfaces;
 using CivisOS.Application.Common.Interfaces;
 using CivisOS.Application.Employees.Interfaces;
+using CivisOS.Application.GeoFences.Interfaces;
+using CivisOS.Application.Messaging.Interfaces;
+using CivisOS.Application.Notifications.Interfaces;
+using CivisOS.Application.Reports.Interfaces;
+using CivisOS.Application.Tasks.Interfaces;
 using CivisOS.Application.Vehicles.Interfaces;
 using CivisOS.Infrastructure.Identity;
 using CivisOS.Infrastructure.Persistence;
@@ -19,6 +27,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.Configure<FcmSettings>(configuration.GetSection(FcmSettings.SectionName));
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
@@ -58,12 +67,42 @@ public static class DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret)),
                     ClockSkew = TimeSpan.FromMinutes(1)
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken)
+                            && (path.StartsWithSegments("/hubs/notifications")
+                                || path.StartsWithSegments("/hubs/chat")))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         services.AddAuthorization();
+        services.AddHttpClient("fcm");
+        services.AddSignalR();
+
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IVehicleService, VehicleService>();
         services.AddScoped<IEmployeeService, EmployeeService>();
+        services.AddScoped<IGeoFenceService, GeoFenceService>();
+        services.AddScoped<IAttendanceService, AttendanceService>();
+        services.AddScoped<IVehicleGpsService, VehicleGpsService>();
+        services.AddScoped<ICleaningService, CleaningService>();
+        services.AddScoped<IWorkTaskService, WorkTaskService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IFcmPushService, FcmPushService>();
+        services.AddScoped<IMessagingService, MessagingService>();
+        services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IAiService, AiService>();
 
         return services;
     }

@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using CivisOS.Application;
 using CivisOS.Infrastructure;
+using CivisOS.Infrastructure.Hubs;
 using CivisOS.Infrastructure.Persistence.Seed;
 using Microsoft.OpenApi.Models;
 
@@ -73,10 +74,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseCors("ReactDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();
 

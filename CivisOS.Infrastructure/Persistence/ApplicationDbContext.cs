@@ -36,6 +36,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<AiAlert> AiAlerts => Set<AiAlert>();
 
+    public DbSet<ShiftMaster> ShiftMasters => Set<ShiftMaster>();
+    public DbSet<EmployeeShiftAssignment> EmployeeShiftAssignments => Set<EmployeeShiftAssignment>();
+    public DbSet<AttendancePunch> AttendancePunches => Set<AttendancePunch>();
+    public DbSet<EmployeeAttendanceDay> EmployeeAttendanceDays => Set<EmployeeAttendanceDay>();
+    public DbSet<AttendanceBreak> AttendanceBreaks => Set<AttendanceBreak>();
+    public DbSet<AttendanceRegularization> AttendanceRegularizations => Set<AttendanceRegularization>();
+    public DbSet<OvertimeRequest> OvertimeRequests => Set<OvertimeRequest>();
+    public DbSet<AttendanceExceptionRecord> AttendanceExceptions => Set<AttendanceExceptionRecord>();
+    public DbSet<AttendanceLock> AttendanceLocks => Set<AttendanceLock>();
+    public DbSet<AttendanceAuditLog> AttendanceAuditLogs => Set<AttendanceAuditLog>();
+    public DbSet<AttendanceImportBatch> AttendanceImportBatches => Set<AttendanceImportBatch>();
+    public DbSet<AttendanceImportError> AttendanceImportErrors => Set<AttendanceImportError>();
+    public DbSet<WeeklyOffRule> WeeklyOffRules => Set<WeeklyOffRule>();
+    public DbSet<HolidayCalendar> HolidayCalendars => Set<HolidayCalendar>();
+    public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+
     IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;
     IQueryable<VehicleType> IApplicationDbContext.VehicleTypes => VehicleTypes;
     IQueryable<VehicleDocument> IApplicationDbContext.VehicleDocuments => VehicleDocuments;
@@ -60,9 +77,41 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     IQueryable<Message> IApplicationDbContext.Messages => Messages;
     IQueryable<AiAlert> IApplicationDbContext.AiAlerts => AiAlerts;
 
+    IQueryable<ShiftMaster> IApplicationDbContext.ShiftMasters => ShiftMasters;
+    IQueryable<EmployeeShiftAssignment> IApplicationDbContext.EmployeeShiftAssignments => EmployeeShiftAssignments;
+    IQueryable<AttendancePunch> IApplicationDbContext.AttendancePunches => AttendancePunches;
+    IQueryable<EmployeeAttendanceDay> IApplicationDbContext.EmployeeAttendanceDays => EmployeeAttendanceDays;
+    IQueryable<AttendanceBreak> IApplicationDbContext.AttendanceBreaks => AttendanceBreaks;
+    IQueryable<AttendanceRegularization> IApplicationDbContext.AttendanceRegularizations => AttendanceRegularizations;
+    IQueryable<OvertimeRequest> IApplicationDbContext.OvertimeRequests => OvertimeRequests;
+    IQueryable<AttendanceExceptionRecord> IApplicationDbContext.AttendanceExceptions => AttendanceExceptions;
+    IQueryable<AttendanceLock> IApplicationDbContext.AttendanceLocks => AttendanceLocks;
+    IQueryable<AttendanceAuditLog> IApplicationDbContext.AttendanceAuditLogs => AttendanceAuditLogs;
+    IQueryable<AttendanceImportBatch> IApplicationDbContext.AttendanceImportBatches => AttendanceImportBatches;
+    IQueryable<AttendanceImportError> IApplicationDbContext.AttendanceImportErrors => AttendanceImportErrors;
+    IQueryable<WeeklyOffRule> IApplicationDbContext.WeeklyOffRules => WeeklyOffRules;
+    IQueryable<HolidayCalendar> IApplicationDbContext.HolidayCalendars => HolidayCalendars;
+    IQueryable<LeaveType> IApplicationDbContext.LeaveTypes => LeaveTypes;
+    IQueryable<LeaveRequest> IApplicationDbContext.LeaveRequests => LeaveRequests;
+
     void IApplicationDbContext.Add<TEntity>(TEntity entity) => Set<TEntity>().Add(entity);
     void IApplicationDbContext.Update<TEntity>(TEntity entity) => Set<TEntity>().Update(entity);
     void IApplicationDbContext.Remove<TEntity>(TEntity entity) => Set<TEntity>().Remove(entity);
+
+    public async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> operation, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await operation(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

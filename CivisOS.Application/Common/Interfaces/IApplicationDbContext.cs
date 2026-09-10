@@ -28,8 +28,26 @@ public interface IApplicationDbContext
     IQueryable<Message> Messages { get; }
     IQueryable<AiAlert> AiAlerts { get; }
 
+    IQueryable<ShiftMaster> ShiftMasters { get; }
+    IQueryable<EmployeeShiftAssignment> EmployeeShiftAssignments { get; }
+    IQueryable<AttendancePunch> AttendancePunches { get; }
+    IQueryable<EmployeeAttendanceDay> EmployeeAttendanceDays { get; }
+    IQueryable<AttendanceBreak> AttendanceBreaks { get; }
+    IQueryable<AttendanceRegularization> AttendanceRegularizations { get; }
+    IQueryable<OvertimeRequest> OvertimeRequests { get; }
+    IQueryable<AttendanceExceptionRecord> AttendanceExceptions { get; }
+    IQueryable<AttendanceLock> AttendanceLocks { get; }
+    IQueryable<AttendanceAuditLog> AttendanceAuditLogs { get; }
+    IQueryable<AttendanceImportBatch> AttendanceImportBatches { get; }
+    IQueryable<AttendanceImportError> AttendanceImportErrors { get; }
+    IQueryable<WeeklyOffRule> WeeklyOffRules { get; }
+    IQueryable<HolidayCalendar> HolidayCalendars { get; }
+    IQueryable<LeaveType> LeaveTypes { get; }
+    IQueryable<LeaveRequest> LeaveRequests { get; }
+
     void Add<TEntity>(TEntity entity) where TEntity : class;
     void Update<TEntity>(TEntity entity) where TEntity : class;
     void Remove<TEntity>(TEntity entity) where TEntity : class;
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task ExecuteInTransactionAsync(Func<CancellationToken, Task> operation, CancellationToken cancellationToken = default);
 }

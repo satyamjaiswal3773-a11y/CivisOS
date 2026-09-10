@@ -14,11 +14,16 @@ public class AttendanceService : IAttendanceService
 {
     private readonly IApplicationDbContext _db;
     private readonly INotificationService _notifications;
+    private readonly IAttendanceProcessor _processor;
 
-    public AttendanceService(IApplicationDbContext db, INotificationService notifications)
+    public AttendanceService(
+        IApplicationDbContext db,
+        INotificationService notifications,
+        IAttendanceProcessor processor)
     {
         _db = db;
         _notifications = notifications;
+        _processor = processor;
     }
 
     public async Task<ApiResponse<AttendanceDto>> CheckInAsync(
@@ -94,6 +99,22 @@ public class AttendanceService : IAttendanceService
         };
 
         _db.Add(attendance);
+
+        if (isInside)
+        {
+            _db.Add(new AttendancePunch
+            {
+                EmployeeId = employee.Id,
+                PunchDateTimeUtc = now,
+                PunchType = PunchType.In,
+                Source = PunchSource.GeoFence,
+                Latitude = request.Latitude,
+                Longitude = request.Longitude,
+                CreatedByUserId = userId,
+                Remarks = $"Geo-fence check-in: {fence.Name}"
+            });
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
 
         var dto = await MapByIdAsync(attendance.Id, cancellationToken);
@@ -117,6 +138,7 @@ public class AttendanceService : IAttendanceService
             };
         }
 
+        await _processor.ProcessEmployeeDayAsync(employee.Id, today, cancellationToken);
         return ApiResponse<AttendanceDto>.Ok(dto!, "Check-in successful.");
     }
 
@@ -175,15 +197,29 @@ public class AttendanceService : IAttendanceService
                 });
         }
 
-        attendance.CheckOutAtUtc = DateTime.UtcNow;
+        var checkOutAt = DateTime.UtcNow;
+        attendance.CheckOutAtUtc = checkOutAt;
         attendance.CheckOutLatitude = request.Latitude;
         attendance.CheckOutLongitude = request.Longitude;
         attendance.CheckOutDistanceMeters = distance;
         attendance.Status = AttendanceStatus.CheckedOut;
-        attendance.UpdatedAtUtc = DateTime.UtcNow;
+        attendance.UpdatedAtUtc = checkOutAt;
 
         _db.Update(attendance);
+        _db.Add(new AttendancePunch
+        {
+            EmployeeId = employee.Id,
+            PunchDateTimeUtc = checkOutAt,
+            PunchType = PunchType.Out,
+            Source = PunchSource.GeoFence,
+            Latitude = request.Latitude,
+            Longitude = request.Longitude,
+            CreatedByUserId = userId,
+            Remarks = $"Geo-fence check-out: {fence.Name}"
+        });
         await _db.SaveChangesAsync(cancellationToken);
+
+        await _processor.ProcessEmployeeDayAsync(employee.Id, today, cancellationToken);
 
         var dto = await MapByIdAsync(attendance.Id, cancellationToken);
         return ApiResponse<AttendanceDto>.Ok(dto!, "Check-out successful.");

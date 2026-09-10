@@ -176,6 +176,66 @@ public static class DbSeeder
                 );
                 await db.SaveChangesAsync();
             }
+
+            if (!await db.ShiftMasters.AnyAsync())
+            {
+                db.ShiftMasters.AddRange(
+                    new ShiftMaster
+                    {
+                        ShiftCode = "GEN",
+                        ShiftName = "General Shift",
+                        StartTime = new TimeOnly(9, 0),
+                        EndTime = new TimeOnly(18, 0),
+                        GracePeriodMinutes = 15,
+                        MinimumWorkingMinutes = 480,
+                        AllowedBreakMinutes = 60,
+                        LateAfterMinutes = 15,
+                        EarlyLeavingAfterMinutes = 15,
+                        OvertimeAllowed = true,
+                        OvertimeAfterMinutes = 30
+                    },
+                    new ShiftMaster
+                    {
+                        ShiftCode = "NIGHT",
+                        ShiftName = "Night Shift",
+                        StartTime = new TimeOnly(22, 0),
+                        EndTime = new TimeOnly(6, 0),
+                        GracePeriodMinutes = 15,
+                        MinimumWorkingMinutes = 480,
+                        AllowedBreakMinutes = 60,
+                        IsNightShift = true,
+                        IsCrossMidnight = true,
+                        OvertimeAllowed = true,
+                        OvertimeAfterMinutes = 30
+                    }
+                );
+                await db.SaveChangesAsync();
+            }
+
+            if (!await db.LeaveTypes.AnyAsync())
+            {
+                db.LeaveTypes.AddRange(
+                    new LeaveType { Code = "CL", Name = "Casual Leave", IsPaid = true },
+                    new LeaveType { Code = "SL", Name = "Sick Leave", IsPaid = true },
+                    new LeaveType { Code = "EL", Name = "Earned Leave", IsPaid = true },
+                    new LeaveType { Code = "LOP", Name = "Loss of Pay", IsPaid = false }
+                );
+                await db.SaveChangesAsync();
+            }
+
+            if (!await db.WeeklyOffRules.AnyAsync())
+            {
+                db.WeeklyOffRules.Add(new WeeklyOffRule
+                {
+                    Name = "Default Sunday Off",
+                    Pattern = WeeklyOffPattern.FixedDays,
+                    FixedDaysCsv = "0",
+                    EffectiveFrom = new DateOnly(2020, 1, 1),
+                    IsActive = true,
+                    Remarks = "Global default weekly off (Sunday). Override per employee/department as needed."
+                });
+                await db.SaveChangesAsync();
+            }
         }
         catch (Exception ex)
         {

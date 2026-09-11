@@ -53,6 +53,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
 
+    public DbSet<AppPermission> AppPermissions => Set<AppPermission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
+    public DbSet<AppPage> AppPages => Set<AppPage>();
+
     IQueryable<Vehicle> IApplicationDbContext.Vehicles => Vehicles;
     IQueryable<VehicleType> IApplicationDbContext.VehicleTypes => VehicleTypes;
     IQueryable<VehicleDocument> IApplicationDbContext.VehicleDocuments => VehicleDocuments;
@@ -93,6 +98,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
     IQueryable<HolidayCalendar> IApplicationDbContext.HolidayCalendars => HolidayCalendars;
     IQueryable<LeaveType> IApplicationDbContext.LeaveTypes => LeaveTypes;
     IQueryable<LeaveRequest> IApplicationDbContext.LeaveRequests => LeaveRequests;
+
+    IQueryable<AppPermission> IApplicationDbContext.AppPermissions => AppPermissions;
+    IQueryable<RolePermission> IApplicationDbContext.RolePermissions => RolePermissions;
+    IQueryable<UserPermission> IApplicationDbContext.UserPermissions => UserPermissions;
+    IQueryable<AppPage> IApplicationDbContext.AppPages => AppPages;
 
     void IApplicationDbContext.Add<TEntity>(TEntity entity) => Set<TEntity>().Add(entity);
     void IApplicationDbContext.Update<TEntity>(TEntity entity) => Set<TEntity>().Update(entity);

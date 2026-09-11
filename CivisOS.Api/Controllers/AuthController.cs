@@ -2,6 +2,8 @@ using System.Security.Claims;
 using CivisOS.Application.Auth.DTOs;
 using CivisOS.Application.Common.Interfaces;
 using CivisOS.Application.Common.Models;
+using CivisOS.Application.Permissions.DTOs;
+using CivisOS.Application.Permissions.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -94,6 +96,23 @@ public class AuthController : ControllerBase
         }
 
         var result = await _authService.GetMeAsync(userId, cancellationToken);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    /// <summary>Returns roles, effective permissions, and allowed pages for the React menu.</summary>
+    [HttpGet("me/access")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<MyAccessDto>>> MyAccess(
+        [FromServices] IPermissionService permissionService,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(ApiResponse<MyAccessDto>.Fail("Unauthorized."));
+        }
+
+        var result = await permissionService.GetMyAccessAsync(userId, cancellationToken);
         return result.Success ? Ok(result) : NotFound(result);
     }
 }

@@ -120,5 +120,5 @@ public class AiController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    // 
+    //
 }

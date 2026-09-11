@@ -9,9 +9,11 @@ using CivisOS.Application.Holidays.Interfaces;
 using CivisOS.Application.Leaves.Interfaces;
 using CivisOS.Application.Messaging.Interfaces;
 using CivisOS.Application.Notifications.Interfaces;
+using CivisOS.Application.Permissions.Interfaces;
 using CivisOS.Application.Reports.Interfaces;
 using CivisOS.Application.Tasks.Interfaces;
 using CivisOS.Application.Vehicles.Interfaces;
+using CivisOS.Infrastructure.Authorization;
 using CivisOS.Infrastructure.Identity;
 using CivisOS.Infrastructure.Persistence;
 using CivisOS.Infrastructure.Services;
@@ -89,10 +91,15 @@ public static class DependencyInjection
             });
 
         services.AddAuthorization();
+        services.AddMemoryCache();
+        services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddHttpClient("fcm");
         services.AddSignalR();
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<IVehicleService, VehicleService>();
         services.AddScoped<IEmployeeService, EmployeeService>();
         services.AddScoped<IGeoFenceService, GeoFenceService>();

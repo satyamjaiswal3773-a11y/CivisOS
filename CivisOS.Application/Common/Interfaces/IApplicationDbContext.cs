@@ -45,6 +45,11 @@ public interface IApplicationDbContext
     IQueryable<LeaveType> LeaveTypes { get; }
     IQueryable<LeaveRequest> LeaveRequests { get; }
 
+    IQueryable<AppPermission> AppPermissions { get; }
+    IQueryable<RolePermission> RolePermissions { get; }
+    IQueryable<UserPermission> UserPermissions { get; }
+    IQueryable<AppPage> AppPages { get; }
+
     void Add<TEntity>(TEntity entity) where TEntity : class;
     void Update<TEntity>(TEntity entity) where TEntity : class;
     void Remove<TEntity>(TEntity entity) where TEntity : class;

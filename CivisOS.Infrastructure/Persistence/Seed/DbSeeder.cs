@@ -236,6 +236,9 @@ public static class DbSeeder
                 });
                 await db.SaveChangesAsync();
             }
+
+            var permissionService = sp.GetRequiredService<CivisOS.Application.Permissions.Interfaces.IPermissionService>();
+            await permissionService.EnsureSeededAsync();
         }
         catch (Exception ex)
         {

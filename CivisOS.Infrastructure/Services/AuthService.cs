@@ -42,6 +42,14 @@ public class AuthService : IAuthService
 
         var role = AppRoles.All.First(r => r.Equals(request.Role, StringComparison.OrdinalIgnoreCase));
 
+        // Public self-registration cannot create privileged admin roles.
+        var privileged = new[] { AppRoles.SuperAdmin, AppRoles.SocietyAdmin, AppRoles.Supervisor };
+        if (privileged.Contains(role, StringComparer.OrdinalIgnoreCase))
+        {
+            return ApiResponse<AuthResponse>.Fail(
+                "This role cannot be self-registered. Ask an administrator to create the account via /api/v1/users.");
+        }
+
         var user = new ApplicationUser
         {
             UserName = request.Email,

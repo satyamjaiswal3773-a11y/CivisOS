@@ -119,4 +119,6 @@ public class AiController : ControllerBase
         var result = await _aiService.EvaluateOverspeedAsync(vehicleId, speedKmh, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
+
+    // 
 }
